@@ -9,18 +9,27 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // HX Brand palette mapped to existing class names
         cobalt: {
-          950: '#05052a',
-          900: '#0a0a3e',
-          800: '#0d0d5c',
-          700: '#1a1a8c',
-          600: '#2222b0',
+          950: '#1a0a35',  // deepest purple bg
+          900: '#2a1155',  // main bg
+          800: '#3b1a78',  // card surface
+          700: '#4a2490',  // elevated surface
+          600: '#542E91',  // HX Purple
         },
         gold: {
-          300: '#ffe066',
-          400: '#ffd700',
-          500: '#ffb300',
-          600: '#e6a000',
+          300: '#fef37a',
+          400: '#FDDC06',  // HX Yellow
+          500: '#e8c900',
+          600: '#c9ae00',
+        },
+        // Easter pastels for accents
+        easter: {
+          pink:    '#ff9ec4',
+          green:   '#78e08f',
+          blue:    '#74b9ff',
+          lavender:'#a29bfe',
+          peach:   '#ffeaa7',
         },
       },
       fontFamily: {

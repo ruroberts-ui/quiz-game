@@ -19,28 +19,27 @@ type PhoneState =
 const OPTION_LABELS = ['A', 'B', 'C', 'D'] as const
 const OPTION_KEYS   = ['option_a', 'option_b', 'option_c', 'option_d'] as const
 const OPTION_COLORS = [
-  'border-blue-400   bg-blue-900/50   hover:bg-blue-800',
-  'border-orange-400 bg-orange-900/50 hover:bg-orange-800',
-  'border-purple-400 bg-purple-900/50 hover:bg-purple-800',
-  'border-teal-400   bg-teal-900/50   hover:bg-teal-800',
+  'border-easter-pink   bg-pink-900/40   hover:bg-pink-800/60',
+  'border-easter-green  bg-green-900/40  hover:bg-green-800/60',
+  'border-easter-blue   bg-blue-900/40   hover:bg-blue-800/60',
+  'border-easter-lavender bg-purple-900/40 hover:bg-purple-800/60',
 ]
 
 export default function PlayerScreen() {
   const { gameId, playerId } = useParams<{ gameId: string; playerId: string }>()
   const supabase = createClient()
 
-  const [phoneState, setPhoneState] = useState<PhoneState>('loading')
-  const [game, setGame]             = useState<Game | null>(null)
-  const [player, setPlayer]         = useState<Player | null>(null)
-  const [question, setQuestion]     = useState<QuestionForPlayer | null>(null)
-  const [timeLeft, setTimeLeft]     = useState(10)
-  const [winnerName, setWinnerName] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const [phoneState, setPhoneState]     = useState<PhoneState>('loading')
+  const [game, setGame]                 = useState<Game | null>(null)
+  const [player, setPlayer]             = useState<Player | null>(null)
+  const [question, setQuestion]         = useState<QuestionForPlayer | null>(null)
+  const [timeLeft, setTimeLeft]         = useState(10)
+  const [winnerName, setWinnerName]     = useState('')
+  const [submitting, setSubmitting]     = useState(false)
   const [chosenAnswer, setChosenAnswer] = useState<string | null>(null)
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // ── Load current question from API (strips correct_answer) ───
   async function loadQuestion(questionIndex: number) {
     const res = await fetch(`/api/games/${gameId}/current-question?index=${questionIndex}`)
     if (!res.ok) return
@@ -49,7 +48,6 @@ export default function PlayerScreen() {
     setChosenAnswer(null)
   }
 
-  // ── Initial load ─────────────────────────────────────────────
   useEffect(() => {
     async function init() {
       const [{ data: g }, { data: p }] = await Promise.all([
@@ -71,7 +69,6 @@ export default function PlayerScreen() {
         if (g.winner_player_id === playerId) {
           setPhoneState('winner')
         } else {
-          // Fetch winner name
           if (g.winner_player_id) {
             const { data: w } = await supabase.from('players').select('name').eq('id', g.winner_player_id).single()
             if (w) setWinnerName(w.name)
@@ -83,7 +80,6 @@ export default function PlayerScreen() {
     init()
   }, [gameId, playerId])
 
-  // ── Realtime: game updates ───────────────────────────────────
   useEffect(() => {
     const channel = supabase.channel(`play-game-${gameId}-${playerId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
@@ -107,12 +103,8 @@ export default function PlayerScreen() {
             return
           }
 
-          if (updated.status === 'LOBBY') {
-            setPhoneState('lobby')
-            return
-          }
+          if (updated.status === 'LOBBY') { setPhoneState('lobby'); return }
 
-          // New question started
           if ((updated.status === 'IN_PROGRESS' || updated.status === 'FINAL_QUESTION') &&
               updated.question_started_at &&
               updated.question_started_at !== prev?.question_started_at) {
@@ -135,34 +127,26 @@ export default function PlayerScreen() {
     return () => { supabase.removeChannel(channel) }
   }, [gameId, playerId, game, phoneState])
 
-  // ── Countdown timer (synced to question_started_at) ──────────
   useEffect(() => {
     if (!game?.question_started_at) return
     if (game.status !== 'IN_PROGRESS' && game.status !== 'FINAL_QUESTION') return
     if (phoneState !== 'question') return
 
     const startTime = new Date(game.question_started_at).getTime()
-    const DURATION  = 10
-
     if (timerRef.current) clearInterval(timerRef.current)
 
     timerRef.current = setInterval(() => {
       const elapsed   = (Date.now() - startTime) / 1000
-      const remaining = Math.max(0, DURATION - elapsed)
+      const remaining = Math.max(0, 10 - elapsed)
       setTimeLeft(remaining)
-
       if (remaining <= 3 && remaining > 0) playCountdownPanic()
       else if (remaining > 3 && Math.abs(remaining - Math.round(remaining)) < 0.15) playCountdownTick()
-
-      if (remaining <= 0) {
-        clearInterval(timerRef.current!)
-      }
+      if (remaining <= 0) clearInterval(timerRef.current!)
     }, 100)
 
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [game?.question_started_at, game?.status, phoneState])
 
-  // ── Submit answer ────────────────────────────────────────────
   async function handleAnswer(letter: string) {
     if (submitting || chosenAnswer || !question) return
     setChosenAnswer(letter)
@@ -176,7 +160,6 @@ export default function PlayerScreen() {
     })
     const data = await res.json()
     setSubmitting(false)
-
     if (!res.ok) return
 
     if (data.isWinner) {
@@ -194,99 +177,116 @@ export default function PlayerScreen() {
   const timerDisplay = Math.ceil(timeLeft)
   const isDanger     = timeLeft <= 3 && timeLeft > 0
 
-  // ── Render ───────────────────────────────────────────────────
-
+  // ── Loading ──────────────────────────────────────────────────
   if (phoneState === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-cobalt-900">
-        <p className="font-display text-2xl text-gold-400 tracking-widest animate-pulse">LOADING…</p>
+        <div className="text-center">
+          <div className="text-6xl mb-4" style={{ animation: 'eggBounce 1.2s ease-in-out infinite' }}>🥚</div>
+          <p className="font-display text-xl text-gold-400 tracking-widest animate-pulse">LOADING…</p>
+        </div>
       </div>
     )
   }
 
+  // ── Lobby ────────────────────────────────────────────────────
   if (phoneState === 'lobby') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-cobalt-900 px-6 text-center">
-        <div className="text-6xl mb-6">🎯</div>
-        <h2 className="font-display text-4xl text-gold-400 tracking-widest uppercase mb-4">
-          You're In!
-        </h2>
-        <p className="text-white font-display text-2xl uppercase tracking-wide mb-2">
-          {player?.name}
-        </p>
-        <p className="text-white/40 text-sm mt-6">
-          Waiting for the host to start the game…
-        </p>
-        <div className="mt-8 flex gap-1">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="w-2 h-2 rounded-full bg-gold-400 animate-bounce"
-                 style={{ animationDelay: `${i * 0.15}s` }} />
-          ))}
+      <div className="min-h-screen flex flex-col bg-cobalt-900">
+        <div className="text-center py-3 text-2xl tracking-widest opacity-40 select-none">
+          🥚🐰🌷🐣🌸🐇🥚🐰🌷🐣
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+          <div className="text-8xl mb-6" style={{ animation: 'eggBounce 1.8s ease-in-out infinite' }}>🐰</div>
+          <h2 className="font-display text-4xl text-gold-400 tracking-widest uppercase mb-3">
+            You&rsquo;re in!
+          </h2>
+          <p className="font-display text-3xl text-white uppercase tracking-wide mb-6">
+            {player?.name}
+          </p>
+          <p className="text-white/40 text-sm">
+            Waiting in the warren… the host will start soon
+          </p>
+          <div className="mt-8 flex gap-2">
+            {['🥚','🥚','🥚'].map((e, i) => (
+              <span key={i} className="text-2xl" style={{ animation: `eggBounce 1s ease-in-out infinite`, animationDelay: `${i * 0.25}s` }}>{e}</span>
+            ))}
+          </div>
+        </div>
+        <div className="text-center py-3 text-2xl tracking-widest opacity-40 select-none">
+          🌸🐇🥚🌷🐣🐰🌸🐇🥚🌷
         </div>
       </div>
     )
   }
 
+  // ── Eliminated ───────────────────────────────────────────────
   if (phoneState === 'eliminated' || phoneState === 'answered-wrong') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-red-950 px-6 text-center">
-        <div className="text-8xl mb-6 animate-bounce">💥</div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-cobalt-900 px-6 text-center">
+        <div className="text-8xl mb-6" style={{ animation: 'eggBounce 0.5s ease-in-out 3' }}>🍳</div>
         <h2 className="font-display text-5xl text-red-400 tracking-widest uppercase mb-4">
-          Eliminated!
+          Scrambled!
         </h2>
         <p className="text-white/60 text-lg">
-          Better luck next time, {player?.name}
+          Hard luck, {player?.name}! 🥚
         </p>
+        <p className="text-white/30 text-sm mt-3">Better luck next Easter…</p>
       </div>
     )
   }
 
+  // ── Answered correct, waiting ────────────────────────────────
   if (phoneState === 'answered-correct') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-green-950 px-6 text-center">
-        <div className="text-8xl mb-6">✅</div>
-        <h2 className="font-display text-5xl text-green-400 tracking-widest uppercase mb-4">
-          Correct!
+      <div className="min-h-screen flex flex-col items-center justify-center bg-cobalt-900 px-6 text-center">
+        <div className="text-8xl mb-6">🐣</div>
+        <h2 className="font-display text-5xl text-easter-green tracking-widest uppercase mb-4">
+          Cracking!
         </h2>
         <p className="text-white/60 text-lg">Get ready for the next question…</p>
-        <div className="mt-8 flex gap-1">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="w-2 h-2 rounded-full bg-green-400 animate-bounce"
-                 style={{ animationDelay: `${i * 0.15}s` }} />
+        <div className="mt-8 flex gap-2">
+          {['🥚','🥚','🥚'].map((e, i) => (
+            <span key={i} className="text-2xl" style={{ animation: `eggBounce 0.8s ease-in-out infinite`, animationDelay: `${i * 0.2}s` }}>{e}</span>
           ))}
         </div>
       </div>
     )
   }
 
+  // ── Winner ───────────────────────────────────────────────────
   if (phoneState === 'winner') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-cobalt-900 px-6 text-center">
-        <div className="text-8xl mb-6 animate-winnerBurst">🏆</div>
-        <h2 className="font-display text-3xl text-gold-400 tracking-widest uppercase mb-2">
-          YOU WON!
-        </h2>
-        <p className="font-display text-6xl gold-shimmer tracking-widest uppercase">
-          {player?.name}
-        </p>
-        <p className="text-white/40 mt-6 text-sm">Last player standing!</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-cobalt-900 px-6 text-center easter-eggs-bg">
+        <div className="relative z-10">
+          <div className="text-8xl mb-4" style={{ animation: 'winnerBurst 0.6s cubic-bezier(0.175,0.885,0.32,1.275) forwards' }}>🏆</div>
+          <p className="font-display text-2xl text-gold-400 tracking-widest uppercase mb-2">
+            🐰 Easter Champion! 🐰
+          </p>
+          <p className="font-display text-6xl gold-shimmer tracking-widest uppercase">
+            {player?.name}
+          </p>
+          <p className="text-white/40 mt-4 text-sm">You found the golden egg! 🥇</p>
+          <div className="mt-6 text-4xl">🥚🌷🐣🌸🐇</div>
+        </div>
       </div>
     )
   }
 
+  // ── Game over (not winner) ───────────────────────────────────
   if (phoneState === 'game-over') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-cobalt-900 px-6 text-center">
-        <div className="text-6xl mb-6">🎮</div>
+        <div className="text-7xl mb-6">🐇</div>
         <h2 className="font-display text-4xl text-white/60 tracking-widest uppercase mb-4">
-          Game Over
+          Hunt&rsquo;s Over!
         </h2>
         {winnerName ? (
           <p className="text-white/60">
-            Winner: <span className="text-gold-400 font-display text-xl">{winnerName}</span>
+            Champion: <span className="text-gold-400 font-display text-2xl">{winnerName} 🏆</span>
           </p>
         ) : (
-          <p className="text-white/40">No survivors this time!</p>
+          <p className="text-white/40">The eggs escaped everyone! 🥚</p>
         )}
       </div>
     )
@@ -298,7 +298,7 @@ export default function PlayerScreen() {
       {/* Timer bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-cobalt-950 border-b-2 border-cobalt-700">
         <span className="font-display text-sm text-white/40 tracking-widest uppercase">
-          {game?.status === 'FINAL_QUESTION' ? '⚡ FINAL' : `Q${(game?.current_question_index ?? 0) + 1}`}
+          {game?.status === 'FINAL_QUESTION' ? '⚡ FINAL' : `🥚 Q${(game?.current_question_index ?? 0) + 1}`}
         </span>
         <div className={`font-display text-4xl leading-none w-14 h-14 rounded-full border-4 flex items-center justify-center
                          ${isDanger ? 'border-red-500 text-red-400 timer-danger' : 'border-gold-400 text-gold-400'}`}>
@@ -309,14 +309,15 @@ export default function PlayerScreen() {
         </span>
       </div>
 
-      {/* Question text */}
+      {/* Question */}
       <div className="px-5 py-6 flex-shrink-0">
         {game?.status === 'FINAL_QUESTION' && (
           <p className="text-gold-400 font-display text-xs tracking-widest text-center mb-3 uppercase">
-            ⚡ First correct answer wins ⚡
+            🥇 First correct answer wins! 🥇
           </p>
         )}
-        <p className="font-display text-xl md:text-2xl text-white tracking-wide leading-snug text-center animate-questionReveal">
+        <p className="font-display text-xl md:text-2xl text-white tracking-wide leading-snug text-center"
+           style={{ animation: 'questionReveal 0.5s ease-out forwards' }}>
           {question?.question_text}
         </p>
       </div>
@@ -326,7 +327,7 @@ export default function PlayerScreen() {
         {OPTION_LABELS.map((letter, i) => {
           const optKey   = OPTION_KEYS[i]
           const optValue = question?.[optKey] ?? ''
-          if (!optValue) return null  // skip option D if question only has 3 choices
+          if (!optValue) return null
           const color    = OPTION_COLORS[i]
           const isChosen = chosenAnswer === letter
 
@@ -343,7 +344,7 @@ export default function PlayerScreen() {
                           ${!chosenAnswer ? color : ''}
                           ${isChosen ? 'border-white bg-white/20 text-white' : 'text-white'}`}
             >
-              <span className="text-3xl font-bold text-gold-400 mb-2">{letter}</span>
+              <span className="text-2xl font-bold text-gold-400 mb-2">{letter}</span>
               <span className="text-base leading-snug">{optValue}</span>
             </button>
           )

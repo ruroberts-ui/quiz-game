@@ -236,8 +236,9 @@ export default function MasterScreen() {
     return (
       <div className="min-h-screen scanlines flex flex-col items-center justify-center bg-cobalt-900 px-8 text-center">
         <div className="animate-winnerBurst">
+            <div className="text-5xl mb-4 tracking-widest">🥚🌷🐣🌸🐇</div>
           <p className="font-display text-2xl text-gold-400 tracking-[0.3em] uppercase mb-4">
-            🏆 We have a winner 🏆
+            🐰 Easter Champion! 🐰
           </p>
           {winner ? (
             <h1 className="font-display text-8xl md:text-9xl gold-shimmer uppercase tracking-wider leading-none">
@@ -245,7 +246,7 @@ export default function MasterScreen() {
             </h1>
           ) : (
             <h1 className="font-display text-5xl text-white/60 uppercase">
-              No Survivors!
+              The eggs escaped! 🥚
             </h1>
           )}
         </div>
@@ -264,27 +265,32 @@ export default function MasterScreen() {
   if (game.status === 'LOBBY') {
     return (
       <div className="min-h-screen scanlines bg-cobalt-900 flex flex-col items-center justify-center px-6 py-8">
-        <h1 className="font-display text-5xl text-gold-400 tracking-widest uppercase mb-10">
-          QUIZ MASTER
+        <div className="text-center mb-2 text-3xl opacity-50 tracking-widest select-none">
+          🥚🐰🌷🐣🌸🐇🥚🐰🌷🐣🌸🐇
+        </div>
+        <h1 className="font-display text-5xl text-gold-400 tracking-widest uppercase mb-8"
+            style={{ animation: 'glow 3s ease-in-out infinite' }}>
+          🐰 Easter Quiz 🐣
         </h1>
 
         <div className="grid md:grid-cols-2 gap-10 w-full max-w-5xl">
           {/* QR Code */}
           <div className="flex flex-col items-center bg-cobalt-800 border-2 border-cobalt-600 rounded-2xl p-8">
-            <p className="font-display text-xl text-white/60 tracking-widest mb-6 uppercase">
-              Players — scan to join
+            <p className="font-display text-xl text-white/60 tracking-widest mb-2 uppercase">
+              🐰 Scan to join the Easter hunt
             </p>
-            <div className="bg-white p-4 rounded-xl">
+            <p className="text-white/30 text-xs mb-5">No login needed — just scan &amp; type a name</p>
+            <div className="bg-white p-4 rounded-xl border-4 border-gold-400">
               <QRCodeSVG value={joinUrl} size={220} />
             </div>
-            <p className="mt-4 text-white/40 text-xs break-all text-center">{joinUrl}</p>
+            <p className="mt-3 text-white/30 text-xs break-all text-center">{joinUrl}</p>
           </div>
 
           {/* Player list */}
           <div className="bg-cobalt-800 border-2 border-cobalt-600 rounded-2xl p-8 flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <p className="font-display text-xl text-white/60 tracking-widest uppercase">
-                Players joined
+                🥚 Players in the warren
               </p>
               <span className="font-display text-3xl text-gold-400">{players.length}</span>
             </div>
@@ -292,17 +298,17 @@ export default function MasterScreen() {
             <div className="flex-1 overflow-y-auto space-y-2 min-h-[180px]">
               {players.length === 0 ? (
                 <p className="text-white/30 text-center mt-8 text-sm">
-                  Waiting for players to scan the QR code…
+                  Waiting for players to scan the QR code… 🐇
                 </p>
               ) : (
                 players.map((p, i) => (
                   <div
                     key={p.id}
-                    className="bg-cobalt-700 border border-cobalt-600 rounded-lg px-4 py-2
-                               font-display text-lg text-white tracking-wide animate-slideUp"
-                    style={{ animationDelay: `${i * 60}ms` }}
+                    className="bg-cobalt-700 border border-cobalt-600 rounded-full px-4 py-2
+                               font-display text-lg text-white tracking-wide text-center"
+                    style={{ animation: 'hopIn 0.4s ease-out forwards', animationDelay: `${i * 60}ms`, opacity: 0 }}
                   >
-                    {p.name}
+                    🥚 {p.name}
                   </div>
                 ))
               )}
@@ -311,11 +317,11 @@ export default function MasterScreen() {
             <button
               onClick={handleStart}
               disabled={players.length === 0 || startingGame}
-              className="mt-6 w-full bg-gold-500 hover:bg-gold-400 disabled:opacity-40
+              className="mt-6 w-full bg-gold-400 hover:bg-gold-300 disabled:opacity-40
                          text-cobalt-950 font-display text-2xl tracking-widest
-                         py-4 rounded-xl uppercase transition-colors"
+                         py-4 rounded-2xl uppercase transition-colors"
             >
-              {startingGame ? 'Starting…' : `Start Game (${players.length} player${players.length !== 1 ? 's' : ''})`}
+              {startingGame ? '🐣 Starting…' : `🐰 Start the Egg Hunt! (${players.length} player${players.length !== 1 ? 's' : ''})`}
             </button>
           </div>
         </div>
@@ -328,7 +334,7 @@ export default function MasterScreen() {
     <div className="min-h-screen scanlines bg-cobalt-900 flex flex-col overflow-hidden">
       {/* Top bar */}
       <div className="flex items-center justify-between px-6 py-3 bg-cobalt-950 border-b-2 border-cobalt-700">
-        <span className="font-display text-lg text-gold-400 tracking-widest">QUIZ MASTER</span>
+        <span className="font-display text-lg text-gold-400 tracking-widest">🐰 EASTER QUIZ</span>
         <span className="font-display text-sm text-white/40 tracking-widest">
           {game.status === 'FINAL_QUESTION' ? '⚡ FINAL QUESTION' : `Q${game.current_question_index + 1} of ${questions.length}`}
         </span>
@@ -343,9 +349,9 @@ export default function MasterScreen() {
           <div className="animate-questionReveal h-full flex flex-col">
             {game.status === 'FINAL_QUESTION' && (
               <div className="text-center mb-3">
-                <span className="inline-block bg-gold-500 text-cobalt-950 font-display text-sm
+                <span className="inline-block bg-gold-400 text-cobalt-950 font-display text-sm
                                  tracking-widest px-4 py-1 rounded-full uppercase">
-                  ⚡ First correct answer wins! ⚡
+                  🥇 First correct answer wins the golden egg! 🥇
                 </span>
               </div>
             )}
@@ -423,7 +429,7 @@ export default function MasterScreen() {
                          text-cobalt-950 font-display text-xl tracking-widest
                          px-10 py-4 rounded-xl uppercase animate-slideUp"
             >
-              {isAdvancing ? 'Loading…' : game.status === 'FINAL_QUESTION' ? 'End Game' : 'Next Question →'}
+              {isAdvancing ? '🐣 Loading…' : game.status === 'FINAL_QUESTION' ? '🏁 End Game' : '🥚 Next Question →'}
             </button>
           </div>
         )}

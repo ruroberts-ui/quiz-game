@@ -5,22 +5,21 @@
 :root {
   --font-oswald: 'Oswald', sans-serif;
   --font-inter:  'Inter', sans-serif;
+  --hx-purple: #542E91;
+  --hx-yellow: #FDDC06;
 }
 
 html, body {
-  background-color: #0a0a3e;
+  background-color: #2a1155;
   color: #ffffff;
   font-family: var(--font-inter);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
 
-/* Prevent tap highlight on mobile answer buttons */
-* {
-  -webkit-tap-highlight-color: transparent;
-}
+* { -webkit-tap-highlight-color: transparent; }
 
-/* Scanline overlay for 80s TV effect on master screen */
+/* Scanline overlay for 80s TV effect */
 .scanlines::after {
   content: '';
   position: fixed;
@@ -30,15 +29,15 @@ html, body {
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 0, 0, 0.08) 2px,
-    rgba(0, 0, 0, 0.08) 4px
+    rgba(0, 0, 0, 0.07) 2px,
+    rgba(0, 0, 0, 0.07) 4px
   );
   z-index: 9999;
 }
 
-/* Gold shimmer on winner text */
+/* HX Yellow shimmer for winner text */
 .gold-shimmer {
-  background: linear-gradient(90deg, #ffd700, #fff9c4, #ffd700, #ffb300);
+  background: linear-gradient(90deg, #FDDC06, #fff8a0, #FDDC06, #e8c900);
   background-size: 300%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -51,17 +50,54 @@ html, body {
   100% { background-position: 300% }
 }
 
-/* Player name chip in grid */
+/* Floating Easter eggs background decoration */
+.easter-eggs-bg {
+  position: relative;
+  overflow: hidden;
+}
+.easter-eggs-bg::before {
+  content: '🥚  🐰  🌷  🥚  🐣  🌸  🥚  🐇';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  font-size: 1.4rem;
+  letter-spacing: 1.5rem;
+  opacity: 0.12;
+  animation: floatAcross 20s linear infinite;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+}
+.easter-eggs-bg::after {
+  content: '🌷  🐣  🥚  🐰  🌸  🐇  🥚  🌷';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  right: 0;
+  font-size: 1.4rem;
+  letter-spacing: 1.5rem;
+  opacity: 0.12;
+  animation: floatAcross 28s linear infinite reverse;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes floatAcross {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Player name chip */
 .player-chip {
   @apply bg-cobalt-700 border-2 border-gold-400 text-white font-display text-lg
-         px-4 py-2 rounded text-center tracking-wider uppercase
+         px-4 py-2 rounded-full text-center tracking-wider uppercase
          transition-all duration-200;
 }
-
 .player-chip.answered {
-  @apply border-green-400 bg-green-900/40;
+  @apply border-easter-green bg-green-900/40;
 }
-
 .player-chip.eliminating {
   animation: eliminate 0.7s ease-in forwards;
 }
@@ -69,31 +105,68 @@ html, body {
 /* Answer option button */
 .option-btn {
   @apply w-full text-left font-display text-xl md:text-2xl tracking-wide
-         px-6 py-5 rounded-lg border-4 border-cobalt-600
+         px-6 py-5 rounded-xl border-4 border-cobalt-600
          bg-cobalt-800 text-white
          transition-all duration-150
          active:scale-95 cursor-pointer select-none;
 }
-
 .option-btn:hover:not(:disabled) {
   @apply border-gold-400 bg-cobalt-700;
 }
+.option-btn.correct { @apply border-easter-green bg-green-800 text-white; }
+.option-btn.wrong   { @apply border-red-500 bg-red-900 text-white; }
+.option-btn:disabled { @apply cursor-not-allowed opacity-80; }
 
-.option-btn.correct {
-  @apply border-green-400 bg-green-800 text-white;
-}
-
-.option-btn.wrong {
-  @apply border-red-500 bg-red-900 text-white;
-}
-
-.option-btn:disabled {
-  @apply cursor-not-allowed opacity-80;
-}
-
-/* Timer circle */
+/* Timer danger state */
 .timer-danger {
   animation: timerPulse 0.5s ease-in-out infinite;
-  color: #ff4444;
-  text-shadow: 0 0 20px #ff4444;
+  color: #ff6b6b;
+  text-shadow: 0 0 20px #ff6b6b;
+}
+
+/* ── Keyframe animations ─────────────────────────────── */
+
+@keyframes eliminate {
+  0%   { transform: scale(1) rotate(0deg);    opacity: 1; filter: brightness(1); }
+  30%  { transform: scale(1.7) rotate(-8deg); opacity: 1; filter: brightness(3) hue-rotate(60deg); }
+  60%  { transform: scale(1.9) rotate(12deg); opacity: 0.6; filter: brightness(2); }
+  100% { transform: scale(0) rotate(45deg);   opacity: 0; filter: brightness(0); }
+}
+
+@keyframes questionReveal {
+  0%   { transform: scale(0.6); opacity: 0; filter: brightness(4); }
+  60%  { transform: scale(1.05); opacity: 1; filter: brightness(1.5); }
+  100% { transform: scale(1);   opacity: 1; filter: brightness(1); }
+}
+
+@keyframes timerPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.15); }
+}
+
+@keyframes slideUp {
+  0%   { transform: translateY(40px); opacity: 0; }
+  100% { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes winnerBurst {
+  0%   { transform: scale(0); opacity: 0; }
+  50%  { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes glow {
+  0%, 100% { text-shadow: 0 0 10px #FDDC06, 0 0 20px #FDDC06; }
+  50%      { text-shadow: 0 0 20px #FDDC06, 0 0 40px #FDDC06, 0 0 60px #e8c900; }
+}
+
+@keyframes eggBounce {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50%      { transform: translateY(-12px) rotate(5deg); }
+}
+
+@keyframes hopIn {
+  0%   { transform: translateX(-40px) rotate(-10deg); opacity: 0; }
+  60%  { transform: translateX(6px) rotate(3deg); opacity: 1; }
+  100% { transform: translateX(0) rotate(0deg); opacity: 1; }
 }

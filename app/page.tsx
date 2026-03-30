@@ -10,10 +10,9 @@ export default function LoginPage() {
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
   const [checking, setChecking] = useState(true)
-  const router  = useRouter()
+  const router   = useRouter()
   const supabase = createClient()
 
-  // If already logged in, go straight to host dashboard
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) router.replace('/host')
@@ -37,21 +36,27 @@ export default function LoginPage() {
   if (checking) return null
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cobalt-900 px-4">
-      <div className="w-full max-w-md">
-        {/* Logo / Title */}
-        <div className="text-center mb-10">
-          <h1 className="font-display text-6xl text-gold-400 tracking-widest uppercase mb-2 animate-glow">
-            QUIZ MASTER
+    <div className="min-h-screen easter-eggs-bg flex items-center justify-center bg-cobalt-900 px-4">
+      <div className="w-full max-w-md relative z-10">
+
+        {/* Easter decoration row */}
+        <div className="text-center text-4xl mb-4 space-x-3">
+          🐰&nbsp;🥚&nbsp;🌷&nbsp;🐣&nbsp;🌸
+        </div>
+
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <h1 className="font-display text-5xl text-gold-400 tracking-widest uppercase mb-1 animate-glow">
+            Easter Quiz
           </h1>
-          <p className="text-cobalt-600 text-sm tracking-widest uppercase text-white/40">
+          <p className="text-white/40 text-sm tracking-widest uppercase">
             Host Control Panel
           </p>
         </div>
 
         <form
           onSubmit={handleLogin}
-          className="bg-cobalt-800 border-2 border-cobalt-600 rounded-xl p-8 space-y-5"
+          className="bg-cobalt-800 border-2 border-cobalt-600 rounded-2xl p-8 space-y-5"
         >
           <div>
             <label className="block text-sm text-white/60 mb-1 uppercase tracking-wider">
@@ -63,8 +68,8 @@ export default function LoginPage() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               className="w-full bg-cobalt-900 border-2 border-cobalt-600 focus:border-gold-400
-                         rounded-lg px-4 py-3 text-white outline-none transition-colors"
-              placeholder="you@example.com"
+                         rounded-xl px-4 py-3 text-white outline-none transition-colors"
+              placeholder="you@holidayextras.com"
             />
           </div>
 
@@ -78,7 +83,7 @@ export default function LoginPage() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               className="w-full bg-cobalt-900 border-2 border-cobalt-600 focus:border-gold-400
-                         rounded-lg px-4 py-3 text-white outline-none transition-colors"
+                         rounded-xl px-4 py-3 text-white outline-none transition-colors"
               placeholder="••••••••"
             />
           </div>
@@ -90,16 +95,16 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gold-500 hover:bg-gold-400 disabled:opacity-50
+            className="w-full bg-gold-400 hover:bg-gold-300 disabled:opacity-50
                        text-cobalt-950 font-display text-2xl tracking-widest
-                       py-4 rounded-lg transition-colors uppercase"
+                       py-4 rounded-xl transition-colors uppercase"
           >
-            {loading ? 'Signing in…' : 'Sign In'}
+            {loading ? 'Signing in…' : '🐣  Sign In'}
           </button>
         </form>
 
-        <p className="text-center text-white/30 text-xs mt-6">
-          Use your Supabase email/password account
+        <p className="text-center text-white/20 text-xs mt-6">
+          Host login only — players join by scanning the QR code
         </p>
       </div>
     </div>
