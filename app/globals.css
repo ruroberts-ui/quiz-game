@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-oswald: 'Oswald', sans-serif;
+  --font-inter:  'Inter', sans-serif;
+}
+
+html, body {
+  background-color: #0a0a3e;
+  color: #ffffff;
+  font-family: var(--font-inter);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* Prevent tap highlight on mobile answer buttons */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Scanline overlay for 80s TV effect on master screen */
+.scanlines::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  z-index: 9999;
+}
+
+/* Gold shimmer on winner text */
+.gold-shimmer {
+  background: linear-gradient(90deg, #ffd700, #fff9c4, #ffd700, #ffb300);
+  background-size: 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 2.5s linear infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 0% }
+  100% { background-position: 300% }
+}
+
+/* Player name chip in grid */
+.player-chip {
+  @apply bg-cobalt-700 border-2 border-gold-400 text-white font-display text-lg
+         px-4 py-2 rounded text-center tracking-wider uppercase
+         transition-all duration-200;
+}
+
+.player-chip.answered {
+  @apply border-green-400 bg-green-900/40;
+}
+
+.player-chip.eliminating {
+  animation: eliminate 0.7s ease-in forwards;
+}
+
+/* Answer option button */
+.option-btn {
+  @apply w-full text-left font-display text-xl md:text-2xl tracking-wide
+         px-6 py-5 rounded-lg border-4 border-cobalt-600
+         bg-cobalt-800 text-white
+         transition-all duration-150
+         active:scale-95 cursor-pointer select-none;
+}
+
+.option-btn:hover:not(:disabled) {
+  @apply border-gold-400 bg-cobalt-700;
+}
+
+.option-btn.correct {
+  @apply border-green-400 bg-green-800 text-white;
+}
+
+.option-btn.wrong {
+  @apply border-red-500 bg-red-900 text-white;
+}
+
+.option-btn:disabled {
+  @apply cursor-not-allowed opacity-80;
+}
+
+/* Timer circle */
+.timer-danger {
+  animation: timerPulse 0.5s ease-in-out infinite;
+  color: #ff4444;
+  text-shadow: 0 0 20px #ff4444;
+}
