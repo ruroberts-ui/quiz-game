@@ -324,8 +324,10 @@ export default function PlayerScreen() {
       {/* Answer buttons */}
       <div className="flex-1 grid grid-cols-2 gap-3 px-4 pb-6">
         {OPTION_LABELS.map((letter, i) => {
-          const optKey  = OPTION_KEYS[i]
-          const color   = OPTION_COLORS[i]
+          const optKey   = OPTION_KEYS[i]
+          const optValue = question?.[optKey] ?? ''
+          if (!optValue) return null  // skip option D if question only has 3 choices
+          const color    = OPTION_COLORS[i]
           const isChosen = chosenAnswer === letter
 
           return (
@@ -342,7 +344,7 @@ export default function PlayerScreen() {
                           ${isChosen ? 'border-white bg-white/20 text-white' : 'text-white'}`}
             >
               <span className="text-3xl font-bold text-gold-400 mb-2">{letter}</span>
-              <span className="text-base leading-snug">{question?.[optKey] ?? ''}</span>
+              <span className="text-base leading-snug">{optValue}</span>
             </button>
           )
         })}

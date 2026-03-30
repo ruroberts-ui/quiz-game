@@ -41,7 +41,8 @@ function parseQuestions(text: string): ParsedQuestion[] {
       if (ans)  correct_answer = ans[1].toUpperCase()
     }
 
-    if (!option_a || !option_b || !option_c || !option_d || !correct_answer) continue
+    // option_d is optional — questions can have 3 or 4 choices
+    if (!option_a || !option_b || !option_c || !correct_answer) continue
 
     questions.push({ question_index: questionIndex, question_text, option_a, option_b, option_c, option_d, correct_answer })
   }

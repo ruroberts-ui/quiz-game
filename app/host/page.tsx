@@ -143,6 +143,8 @@ export default function HostDashboard() {
                   <p className="text-white text-lg font-semibold mb-4">{q.question_text}</p>
                   <div className="grid grid-cols-2 gap-2">
                     {(['a', 'b', 'c', 'd'] as const).map((l, i) => {
+                      const optValue = [q.option_a, q.option_b, q.option_c, q.option_d][i]
+                      if (!optValue) return null
                       const isAnswer = q.correct_answer.toUpperCase() === LETTER[i]
                       return (
                         <div
@@ -154,7 +156,7 @@ export default function HostDashboard() {
                           }`}
                         >
                           <span className="font-display mr-1">{LETTER[i]})</span>
-                          {q[`option_${l}`]}
+                          {optValue}
                           {isAnswer && ' ✓'}
                         </div>
                       )

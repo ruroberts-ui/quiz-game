@@ -369,7 +369,9 @@ export default function MasterScreen() {
             {/* Options */}
             <div className="grid grid-cols-2 gap-3">
               {(['a', 'b', 'c', 'd'] as const).map((l, i) => {
-                const letter  = ['A', 'B', 'C', 'D'][i]
+                const letter   = ['A', 'B', 'C', 'D'][i]
+                const optValue = [currentQuestion.option_a, currentQuestion.option_b, currentQuestion.option_c, currentQuestion.option_d][i]
+                if (!optValue) return null
                 const isRight = roundPhase === 'results' && currentQuestion.correct_answer === letter
                 const isWrong = roundPhase === 'results' && currentQuestion.correct_answer !== letter
                 return (
@@ -382,7 +384,7 @@ export default function MasterScreen() {
                                   'border-cobalt-600 bg-cobalt-800 text-white'}`}
                   >
                     <span className="text-gold-400 mr-2">{letter})</span>
-                    {currentQuestion[`option_${l}`]}
+                    {optValue}
                     {isRight && ' ✓'}
                   </div>
                 )
