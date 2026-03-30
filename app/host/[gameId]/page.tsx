@@ -34,8 +34,10 @@ export default function MasterScreen() {
   const prevIndexRef  = useRef<number>(-1)
   const prevStatusRef = useRef<string>('')
 
+  // Use window.location.origin so the QR code always points to the
+  // correct domain automatically — works on localhost AND on Vercel.
   const joinUrl = typeof window !== 'undefined'
-    ? `${process.env.NEXT_PUBLIC_APP_URL}/join/${gameId}`
+    ? `${window.location.origin}/join/${gameId}`
     : ''
 
   // ── Initial data load ────────────────────────────────────────
