@@ -1,4 +1,10 @@
-export type GameStatus = 'LOBBY' | 'IN_PROGRESS' | 'FINAL_QUESTION' | 'COMPLETE'
+export type GameStatus =
+  | 'LOBBY'
+  | 'IN_PROGRESS'
+  | 'FINAL_QUESTION'
+  | 'COMPLETE'
+  | 'HIGHER_LOWER'
+  | 'APRIL_FOOL'
 
 export interface Game {
   id: string
@@ -6,6 +12,8 @@ export interface Game {
   current_question_index: number
   question_started_at: string | null
   winner_player_id: string | null
+  bonus_egg_count: number | null
+  bonus_shown_number: number | null
   created_at: string
 }
 

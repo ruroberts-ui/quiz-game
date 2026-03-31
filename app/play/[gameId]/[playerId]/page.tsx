@@ -14,7 +14,12 @@ type PhoneState =
   | 'answered-wrong'
   | 'eliminated'
   | 'winner'
+  | 'higher-lower'
+  | 'april-fool'
   | 'game-over'
+
+// Three phases of the hatching egg elimination animation
+type ElimPhase = 'shaking' | 'hatching' | 'revealed'
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D'] as const
 const OPTION_KEYS   = ['option_a', 'option_b', 'option_c', 'option_d'] as const
@@ -33,12 +38,17 @@ export default function PlayerScreen() {
   const [game, setGame]                 = useState<Game | null>(null)
   const [player, setPlayer]             = useState<Player | null>(null)
   const [question, setQuestion]         = useState<QuestionForPlayer | null>(null)
-  const [timeLeft, setTimeLeft]         = useState(10)
+  const [timeLeft, setTimeLeft]         = useState(15)
   const [winnerName, setWinnerName]     = useState('')
   const [submitting, setSubmitting]     = useState(false)
   const [chosenAnswer, setChosenAnswer] = useState<string | null>(null)
+  const [bonusSubmitting, setBonusSubmitting] = useState(false)
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Elimination animation phase
+  const [elimPhase, setElimPhase] = useState<ElimPhase>('shaking')
+
+  const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null)
+  const elimTimers  = useRef<ReturnType<typeof setTimeout>[]>([])
 
   async function loadQuestion(questionIndex: number) {
     const res = await fetch(`/api/games/${gameId}/current-question?index=${questionIndex}`)
@@ -47,6 +57,21 @@ export default function PlayerScreen() {
     setQuestion(data.question)
     setChosenAnswer(null)
   }
+
+  // Drive the 3-phase egg-hatching animation whenever we enter an elimination state
+  useEffect(() => {
+    if (phoneState !== 'eliminated' && phoneState !== 'answered-wrong') return
+
+    // Clear any lingering timers
+    elimTimers.current.forEach(clearTimeout)
+    setElimPhase('shaking')
+
+    const t1 = setTimeout(() => setElimPhase('hatching'),  1100)
+    const t2 = setTimeout(() => setElimPhase('revealed'),  2400)
+    elimTimers.current = [t1, t2]
+
+    return () => { t1 && clearTimeout(t1); t2 && clearTimeout(t2) }
+  }, [phoneState])
 
   useEffect(() => {
     async function init() {
@@ -65,6 +90,12 @@ export default function PlayerScreen() {
       } else if (g.status === 'IN_PROGRESS' || g.status === 'FINAL_QUESTION') {
         await loadQuestion(g.current_question_index)
         setPhoneState('question')
+      } else if (g.status === 'HIGHER_LOWER') {
+        if (g.winner_player_id === playerId) setPhoneState('higher-lower')
+        else setPhoneState('game-over')
+      } else if (g.status === 'APRIL_FOOL') {
+        if (g.winner_player_id === playerId) setPhoneState('april-fool')
+        else setPhoneState('game-over')
       } else if (g.status === 'COMPLETE') {
         if (g.winner_player_id === playerId) {
           setPhoneState('winner')
@@ -103,6 +134,17 @@ export default function PlayerScreen() {
             return
           }
 
+          if (updated.status === 'HIGHER_LOWER') {
+            if (timerRef.current) clearInterval(timerRef.current)
+            if (updated.winner_player_id === playerId) setPhoneState('higher-lower')
+            return
+          }
+
+          if (updated.status === 'APRIL_FOOL') {
+            if (updated.winner_player_id === playerId) setPhoneState('april-fool')
+            return
+          }
+
           if (updated.status === 'LOBBY') { setPhoneState('lobby'); return }
 
           if ((updated.status === 'IN_PROGRESS' || updated.status === 'FINAL_QUESTION') &&
@@ -137,7 +179,7 @@ export default function PlayerScreen() {
 
     timerRef.current = setInterval(() => {
       const elapsed   = (Date.now() - startTime) / 1000
-      const remaining = Math.max(0, 10 - elapsed)
+      const remaining = Math.max(0, 15 - elapsed)
       setTimeLeft(remaining)
       if (remaining <= 3 && remaining > 0) playCountdownPanic()
       else if (remaining > 3 && Math.abs(remaining - Math.round(remaining)) < 0.15) playCountdownTick()
@@ -172,6 +214,13 @@ export default function PlayerScreen() {
       playWrong()
       setPhoneState('answered-wrong')
     }
+  }
+
+  async function handleBonusAnswer(choice: 'higher' | 'lower') {
+    if (bonusSubmitting) return
+    setBonusSubmitting(true)
+    await fetch(`/api/games/${gameId}/bonus-answer`, { method: 'POST' })
+    // State will update via Realtime when status becomes APRIL_FOOL
   }
 
   const timerDisplay = Math.ceil(timeLeft)
@@ -220,18 +269,59 @@ export default function PlayerScreen() {
     )
   }
 
-  // ── Eliminated ───────────────────────────────────────────────
+  // ── Eliminated / Wrong Answer → hatching egg → Mr T ──────────
   if (phoneState === 'eliminated' || phoneState === 'answered-wrong') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-cobalt-900 px-6 text-center">
-        <div className="text-8xl mb-6" style={{ animation: 'eggBounce 0.5s ease-in-out 3' }}>🍳</div>
-        <h2 className="font-display text-5xl text-red-400 tracking-widest uppercase mb-4">
-          Scrambled!
-        </h2>
-        <p className="text-white/60 text-lg">
-          Hard luck, {player?.name}! 🥚
-        </p>
-        <p className="text-white/30 text-sm mt-3">Better luck next Easter…</p>
+
+        {elimPhase === 'shaking' && (
+          <>
+            <div
+              className="text-9xl mb-6"
+              style={{ animation: 'eggShake 0.35s ease-in-out infinite' }}
+            >
+              🥚
+            </div>
+            <p className="font-display text-2xl text-gold-400 tracking-widest uppercase animate-pulse">
+              Uh oh…
+            </p>
+          </>
+        )}
+
+        {elimPhase === 'hatching' && (
+          <>
+            <div
+              className="text-9xl mb-6"
+              style={{ animation: 'eggCrack 1.2s ease-in forwards' }}
+            >
+              🐣
+            </div>
+            <p className="font-display text-2xl text-gold-400 tracking-widest uppercase animate-pulse">
+              Something&apos;s hatching…
+            </p>
+          </>
+        )}
+
+        {elimPhase === 'revealed' && (
+          <>
+            <img
+              src="/MrT.jpg"
+              alt="Mr T"
+              className="w-64 h-auto rounded-2xl mb-5 border-4 border-red-500"
+              style={{ animation: 'mrTReveal 0.7s cubic-bezier(0.175,0.885,0.32,1.275) forwards' }}
+            />
+            <h2
+              className="font-display text-4xl text-red-400 tracking-widest uppercase mb-3"
+              style={{ animation: 'mrTReveal 0.7s 0.1s ease-out both' }}
+            >
+              You&apos;re an April Fool!
+            </h2>
+            <p className="text-white/50 text-lg">
+              Hard luck, {player?.name}! 🥚
+            </p>
+            <p className="text-white/25 text-sm mt-2">Better luck next Easter…</p>
+          </>
+        )}
       </div>
     )
   }
@@ -268,7 +358,79 @@ export default function PlayerScreen() {
           </p>
           <p className="text-white/40 mt-4 text-sm">You found the golden egg! 🥇</p>
           <div className="mt-6 text-4xl">🥚🌷🐣🌸🐇</div>
+          <p className="text-white/30 text-xs mt-4 animate-pulse">Standby for the bonus round…</p>
         </div>
+      </div>
+    )
+  }
+
+  // ── Higher or Lower bonus game (winner only) ─────────────────
+  if (phoneState === 'higher-lower') {
+    const shownNumber = game?.bonus_shown_number ?? '?'
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-cobalt-900 px-6 text-center">
+        <div className="text-6xl mb-4" style={{ animation: 'eggBounce 1.5s ease-in-out infinite' }}>🥚</div>
+        <h2 className="font-display text-3xl text-gold-400 tracking-widest uppercase mb-2">
+          Bonus Round!
+        </h2>
+        <p className="text-white/60 text-base mb-6">
+          Look at the big screen — are there <strong className="text-white">Higher</strong> or <strong className="text-white">Lower</strong> eggs than…
+        </p>
+
+        {/* The shown number */}
+        <div className="bg-gold-400 text-cobalt-950 font-display text-8xl rounded-2xl px-8 py-4 mb-8 leading-none">
+          {shownNumber}
+        </div>
+
+        {/* Higher / Lower buttons */}
+        <div className="flex gap-4 w-full max-w-xs">
+          <button
+            onClick={() => handleBonusAnswer('higher')}
+            disabled={bonusSubmitting}
+            className="flex-1 bg-green-700 hover:bg-green-600 disabled:opacity-50
+                       text-white font-display text-2xl tracking-widest
+                       py-5 rounded-2xl uppercase transition-colors active:scale-95"
+          >
+            ▲ Higher
+          </button>
+          <button
+            onClick={() => handleBonusAnswer('lower')}
+            disabled={bonusSubmitting}
+            className="flex-1 bg-blue-700 hover:bg-blue-600 disabled:opacity-50
+                       text-white font-display text-2xl tracking-widest
+                       py-5 rounded-2xl uppercase transition-colors active:scale-95"
+          >
+            ▼ Lower
+          </button>
+        </div>
+
+        {bonusSubmitting && (
+          <p className="text-white/40 text-sm mt-4 animate-pulse">Checking your answer…</p>
+        )}
+      </div>
+    )
+  }
+
+  // ── April Fool (bonus round result — winner always loses) ────
+  if (phoneState === 'april-fool') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-cobalt-900 px-6 text-center">
+        <img
+          src="/MrT.jpg"
+          alt="Mr T"
+          className="w-64 h-auto rounded-2xl mb-5 border-4 border-red-500"
+          style={{ animation: 'mrTReveal 0.7s cubic-bezier(0.175,0.885,0.32,1.275) forwards' }}
+        />
+        <h2
+          className="font-display text-4xl text-red-400 tracking-widest uppercase mb-3"
+          style={{ animation: 'mrTReveal 0.7s 0.1s ease-out both' }}
+        >
+          You are another<br />April Fool!
+        </h2>
+        <p className="text-white/50 text-lg mt-2">
+          Gotcha, {player?.name}! 😂
+        </p>
+        <p className="text-white/25 text-sm mt-2">Nobody escapes Mr T…</p>
       </div>
     )
   }

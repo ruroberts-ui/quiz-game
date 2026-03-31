@@ -81,3 +81,19 @@ ALTER PUBLICATION supabase_realtime ADD TABLE players;
 ALTER PUBLICATION supabase_realtime ADD TABLE answers;
 
 -- (questions don't change during gameplay so no Realtime needed)
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- MIGRATION — Higher/Lower bonus round (run AFTER initial schema)
+-- Supabase Dashboard → SQL Editor → New query
+-- ═══════════════════════════════════════════════════════════════
+
+-- 1. Drop the old status CHECK constraint and re-add with new values
+ALTER TABLE games DROP CONSTRAINT IF EXISTS games_status_check;
+ALTER TABLE games
+  ADD CONSTRAINT games_status_check
+  CHECK (status IN ('LOBBY','IN_PROGRESS','FINAL_QUESTION','COMPLETE','HIGHER_LOWER','APRIL_FOOL'));
+
+-- 2. Add bonus columns
+ALTER TABLE games ADD COLUMN IF NOT EXISTS bonus_egg_count    INTEGER;
+ALTER TABLE games ADD COLUMN IF NOT EXISTS bonus_shown_number INTEGER;

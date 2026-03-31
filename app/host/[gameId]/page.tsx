@@ -25,9 +25,10 @@ export default function MasterScreen() {
   const [timeLeft, setTimeLeft]   = useState(10)
   const [eliminatingIds, setEliminatingIds] = useState<Set<string>>(new Set())
   const [winner, setWinner]       = useState<Player | null>(null)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [startingGame, setStartingGame] = useState(false)
-  const [isAdvancing, setIsAdvancing]   = useState(false)
+  const [isProcessing, setIsProcessing]   = useState(false)
+  const [startingGame, setStartingGame]   = useState(false)
+  const [isAdvancing, setIsAdvancing]     = useState(false)
+  const [startingBonus, setStartingBonus] = useState(false)
 
   const processedRef  = useRef(false)   // prevent double-calling process-round
   const timerRef      = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -180,7 +181,7 @@ export default function MasterScreen() {
     if (roundPhase === 'results') return
 
     const startTime = new Date(game.question_started_at).getTime()
-    const DURATION  = 10
+    const DURATION  = 15
 
     if (timerRef.current) clearInterval(timerRef.current)
     processedRef.current = false
@@ -218,6 +219,12 @@ export default function MasterScreen() {
     setIsAdvancing(false)
   }
 
+  async function handleStartBonusRound() {
+    setStartingBonus(true)
+    await fetch(`/api/games/${gameId}/bonus-round`, { method: 'POST' })
+    // Game status update via Realtime — no need to set state manually
+  }
+
   // ── Derived state ────────────────────────────────────────────
   if (!game) {
     return (
@@ -237,8 +244,8 @@ export default function MasterScreen() {
   if (game.status === 'COMPLETE') {
     return (
       <div className="min-h-screen scanlines flex flex-col items-center justify-center bg-cobalt-900 px-8 text-center">
-        <div className="animate-winnerBurst">
-            <div className="text-5xl mb-4 tracking-widest">🥚🌷🐣🌸🐇</div>
+        <div style={{ animation: 'winnerBurst 0.6s cubic-bezier(0.175,0.885,0.32,1.275) forwards' }}>
+          <div className="text-5xl mb-4 tracking-widest">🥚🌷🐣🌸🐇</div>
           <p className="font-display text-2xl text-gold-400 tracking-[0.3em] uppercase mb-4">
             🐰 Easter Champion! 🐰
           </p>
@@ -252,9 +259,87 @@ export default function MasterScreen() {
             </h1>
           )}
         </div>
+
+        <div className="flex gap-4 mt-16">
+          {winner && (
+            <button
+              onClick={handleStartBonusRound}
+              disabled={startingBonus}
+              className="bg-gold-400 hover:bg-gold-300 disabled:opacity-50
+                         text-cobalt-950 font-display text-xl tracking-widest
+                         px-8 py-4 rounded-xl uppercase transition-colors"
+            >
+              {startingBonus ? '🥚 Starting…' : '🥚 Bonus Round: Higher or Lower?'}
+            </button>
+          )}
+          <button
+            onClick={() => router.push('/host')}
+            className="bg-cobalt-700 hover:bg-cobalt-600 text-white/70
+                       font-display text-xl tracking-widest px-8 py-4 rounded-xl uppercase"
+          >
+            New Game
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── HIGHER_LOWER screen ───────────────────────────────────────
+  if (game.status === 'HIGHER_LOWER') {
+    const eggCount    = game.bonus_egg_count    ?? 0
+    const shownNumber = game.bonus_shown_number ?? 0
+    return (
+      <div className="min-h-screen scanlines bg-cobalt-900 flex flex-col items-center justify-center px-8 text-center">
+        <p className="font-display text-2xl text-gold-400 tracking-widest uppercase mb-1">
+          🥚 Bonus Round: Higher or Lower? 🥚
+        </p>
+        <p className="text-white/50 mb-6">
+          How many eggs are there? Ask <strong className="text-white">{winner?.name}</strong> — is it Higher or Lower than…
+        </p>
+
+        {/* The number the winner sees on their phone */}
+        <div className="bg-gold-400 text-cobalt-950 font-display rounded-3xl px-12 py-6 mb-8 leading-none"
+             style={{ fontSize: '8rem' }}>
+          {shownNumber}
+        </div>
+
+        {/* Egg grid */}
+        <div className="max-w-3xl flex flex-wrap justify-center gap-1 mb-6">
+          {Array.from({ length: eggCount }).map((_, i) => (
+            <span key={i} className="text-3xl leading-none">🥚</span>
+          ))}
+        </div>
+
+        <p className="font-display text-lg text-white/30 tracking-widest animate-pulse">
+          There are actually <strong className="text-white/60">{eggCount}</strong> eggs — waiting for {winner?.name} to answer…
+        </p>
+      </div>
+    )
+  }
+
+  // ── APRIL_FOOL screen ─────────────────────────────────────────
+  if (game.status === 'APRIL_FOOL') {
+    return (
+      <div className="min-h-screen scanlines bg-cobalt-900 flex flex-col items-center justify-center px-8 text-center">
+        <img
+          src="/MrT.jpg"
+          alt="Mr T"
+          className="w-72 h-auto rounded-2xl mb-6 border-4 border-red-500"
+          style={{ animation: 'mrTReveal 0.8s cubic-bezier(0.175,0.885,0.32,1.275) forwards' }}
+        />
+        <h1
+          className="font-display text-6xl text-red-400 tracking-widest uppercase mb-4"
+          style={{ animation: 'mrTReveal 0.8s 0.15s ease-out both' }}
+        >
+          You are another<br />April Fool!
+        </h1>
+        <p className="text-white/50 text-2xl mb-2">
+          {winner?.name} fell for it! 😂
+        </p>
+        <p className="text-white/25 mb-10">Nobody escapes Mr T…</p>
         <button
           onClick={() => router.push('/host')}
-          className="mt-16 bg-gold-500 hover:bg-gold-400 text-cobalt-950
+          className="bg-gold-400 hover:bg-gold-300 text-cobalt-950
                      font-display text-xl tracking-widest px-8 py-4 rounded-xl uppercase"
         >
           New Game
